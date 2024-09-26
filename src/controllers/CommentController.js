@@ -20,10 +20,10 @@ class CommentController {
 
   // Get comment of product
   async getParentCommentOfAnswer(req, res, next) {
-    const answerID = req.params.id;
+    const mangaID = req.params.id;
     new SuccessResponse({
       message: "Get comment of product successfully",
-      metadata: await commentService.getParentCommentOfAnswer(answerID),
+      metadata: await commentService.getParentCommentOfManga(mangaID),
     }).send(res);
   }
 

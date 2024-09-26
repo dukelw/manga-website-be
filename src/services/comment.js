@@ -1,11 +1,10 @@
 const { NotFoundError } = require("../core/error-response");
 const { CommentModel } = require("../models/Comment");
-const { AnswerModel } = require("../models/Answer");
 const { UserModel } = require("../models/User");
 
 class CommentService {
   async createComment({
-    answer_id,
+    manga_id,
     user_id,
     content,
     parent_comment_id = null,
@@ -23,7 +22,7 @@ class CommentService {
       parent_name = foundComment.comment_user.user_name;
     }
     const comment = new CommentModel({
-      comment_answer_id: answer_id,
+      comment_manga_id: manga_id,
       comment_user: {
         user_id,
         user_name: foundUser.user_name,
@@ -46,7 +45,7 @@ class CommentService {
       // Update many comments
       await CommentModel.updateMany(
         {
-          comment_answer_id: answer_id,
+          comment_manga_id: manga_id,
           comment_right: { $gte: rightValue },
         },
         {
@@ -58,7 +57,7 @@ class CommentService {
 
       await CommentModel.updateMany(
         {
-          comment_answer_id: answer_id,
+          comment_manga_id: manga_id,
           comment_left: { $gt: rightValue },
         },
         {
@@ -68,7 +67,7 @@ class CommentService {
     } else {
       const maxRightValue = await CommentModel.findOne(
         {
-          comment_answer_id: answer_id,
+          comment_manga_id: manga_id,
         },
         "comment_right",
         { sort: { comment_right: -1 } }
@@ -87,7 +86,7 @@ class CommentService {
   }
 
   async getCommentByParentID({
-    answer_id,
+    manga_id,
     parent_comment_id,
     limit = 10,
     offset = 0,
@@ -98,7 +97,7 @@ class CommentService {
         throw new NotFoundError("Can not find parent comment");
 
       const comment = await CommentModel.find({
-        comment_answer_id: answer_id,
+        comment_manga_id: manga_id,
         comment_left: { $gt: parentComment.comment_left },
         comment_right: { $lte: parentComment.comment_right },
       })
@@ -109,7 +108,7 @@ class CommentService {
           comment_parent_id: 1,
           comment_user: 1,
           comment_parent_name: 1,
-          comment_answer_id: 1,
+          comment_manga_id: 1,
           createdAt: 1,
           updatedAt: 1,
         })
@@ -117,7 +116,7 @@ class CommentService {
       return comment;
     }
     const comments = await CommentModel.find({
-      comment_answer_id: answer_id,
+      comment_manga_id: manga_id,
       comment_parent_id: parent_comment_id,
     })
       .select({
@@ -127,7 +126,7 @@ class CommentService {
         comment_parent_id: 1,
         comment_user: 1,
         comment_parent_name: 1,
-        comment_answer_id: 1,
+        comment_manga_id: 1,
         createdAt: 1,
         updatedAt: 1,
       })
@@ -142,11 +141,7 @@ class CommentService {
     return comment;
   }
 
-  async deleteComment({ comment_id, answer_id }) {
-    // Check answer's existence in database
-    const foundAnswer = await AnswerModel.findById(answer_id);
-    if (!foundAnswer) throw new NotFoundError("Answer not found");
-
+  async deleteComment({ comment_id, manga_id }) {
     // 1. Get left value and right value of comment
     const comment = await CommentModel.findById(comment_id);
     if (!comment) throw new NotFoundError("Comment not found");
@@ -159,14 +154,14 @@ class CommentService {
 
     // 3. Delete all comment which is child of the deleted comment
     await CommentModel.deleteMany({
-      comment_answer_id: answer_id,
+      comment_manga_id: manga_id,
       comment_left: { $gte: leftValue, $lte: rightValue },
     });
 
     // 4. Update left and right of the rest comments
     await CommentModel.updateMany(
       {
-        comment_answer_id: answer_id,
+        comment_manga_id: manga_id,
         comment_right: { $gt: rightValue },
       },
       {
@@ -176,7 +171,7 @@ class CommentService {
 
     await CommentModel.updateMany(
       {
-        comment_answer_id: answer_id,
+        comment_manga_id: manga_id,
         comment_left: { $gt: rightValue },
       },
       {
@@ -186,12 +181,9 @@ class CommentService {
     return true;
   }
 
-  async getParentCommentOfAnswer(answer_id) {
-    const foundAnswer = await AnswerModel.findById(answer_id);
-    if (!foundAnswer) throw new NotFoundError("Answer not found");
-
+  async getParentCommentOfManga(manga_id) {
     const parentComments = await CommentModel.find({
-      comment_answer_id: answer_id,
+      comment_manga_id: manga_id,
       comment_parent_id: null,
     });
 

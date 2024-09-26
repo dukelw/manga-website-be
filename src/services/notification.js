@@ -3,7 +3,7 @@ const { UserModel } = require("../models/User");
 
 class NotificationService {
   create = async ({
-    notification_answer_id,
+    notification_manga_id,
     notification_sender_id,
     notification_receiver_id = null,
     notification_content,
@@ -13,7 +13,7 @@ class NotificationService {
       notification_receiver_id = foundAdmin._id;
     }
     const result = await NotificationModel.create({
-      notification_answer_id,
+      notification_manga_id,
       notification_sender_id,
       notification_receiver_id,
       notification_content,
@@ -32,15 +32,15 @@ class NotificationService {
     return notifications;
   };
 
-  markRead = async ({ answerID, userID }) => {
+  markRead = async ({ mangaID, userID }) => {
     const foundNotification = await NotificationModel.find({
-      notification_answer_id: answerID,
+      notification_manga_id: mangaID,
       notification_receiver_id: userID,
     });
     if (!foundNotification) throw new Error("Notification not found!");
 
     const result = await NotificationModel.updateMany(
-      { notification_answer_id: answerID, notification_receiver_id: userID },
+      { notification_manga_id: mangaID, notification_receiver_id: userID },
       { $set: { isRead: true } },
       { upsert: false }
     );

@@ -5,9 +5,8 @@ const COLLECTION_NAME = "Comments";
 
 var commentSchema = new Schema(
   {
-    comment_answer_id: {
+    comment_manga_id: {
       type: String,
-      ref: "Answer",
     },
     comment_user: {
       user_id: {

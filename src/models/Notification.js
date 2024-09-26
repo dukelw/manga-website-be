@@ -5,9 +5,8 @@ const COLLECTION_NAME = "Notifications";
 
 var notificationSchema = new Schema(
   {
-    notification_answer_id: {
+    notification_manga_id: {
       type: String,
-      ref: "Answer",
     },
     notification_sender_id: {
       type: String,
