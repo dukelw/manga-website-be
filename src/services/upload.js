@@ -1,59 +1,42 @@
-const cloudinary = require("../configs/cloudinary");
+const { s3, PutObjectCommand, GetObjectCommand } = require("../configs/s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const crypto = require("crypto");
+const randomImageName = () => crypto.randomBytes(16).toString("hex");
 
-const uploadImageFromUrl = async () => {
+// S3 Client
+const uploadImageFromLocalS3 = async ({ file }) => {
   try {
-    const urlImage =
-      "https://e7.pngegg.com/pngimages/458/39/png-clipart-mobile-banking-computer-icons-bank-service-logo.png";
-    const folderName = "toeic/answers";
-    const newFileName = "demo";
-
-    const result = await cloudinary.uploader.upload(urlImage, {
-      public_id: newFileName,
-      folder: folderName,
+    const imageName = randomImageName();
+    // config upload image
+    const command = new PutObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: imageName,
+      Body: file.buffer,
+      ContentType: "image/jpeg",
     });
-    console.log(result);
-    return result;
-  } catch (error) {
-    console.error(error);
-  }
-};
 
-const uploadImageFromLocal = async ({
-  path,
-  folderName = "toeic/answers",
-  name = "image",
-}) => {
-  try {
-    const result = await cloudinary.uploader.upload(path, {
-      public_id: name,
-      folder: folderName,
+    // upload image
+    const result = await s3.send(command);
+    console.log("S3 upload result:::", result);
+
+    // config public url
+    const signedUrl = new GetObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: imageName,
     });
+
+    const url = await getSignedUrl(s3, signedUrl, { expiresIn: 3600 });
+
+    // Cloudfront
     return {
-      img_url: result.secure_url,
-      thumb_url: cloudinary.url(result.public_id, {
-        height: 100,
-        width: 100,
-      }),
+      url,
+      result,
     };
   } catch (error) {
-    console.error(error);
-  }
-};
-
-const uploadAudioFromLocal = async (path) => {
-  try {
-    const result = await cloudinary.uploader.upload(path, {
-      resource_type: "video",
-    });
-    return { audio_url: result.secure_url };
-  } catch (error) {
-    console.error("Upload failed:", error);
-    throw error;
+    console.error(error + "when uploading image S3");
   }
 };
 
 module.exports = {
-  uploadImageFromUrl,
-  uploadImageFromLocal,
-  uploadAudioFromLocal,
+  uploadImageFromLocalS3,
 };

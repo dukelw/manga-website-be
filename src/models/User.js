@@ -23,13 +23,15 @@ var userSchema = new Schema(
     },
     user_birthday: {
       type: Date,
+      default: new Date(),
     },
     user_gender: {
-      Type: String,
-      enum: ["male", "female", "other"],
+      type: String,
+      default: "Male",
     },
     user_phone: {
-      Type: String,
+      type: String,
+      default: "",
     },
     isAdmin: {
       type: Boolean,
