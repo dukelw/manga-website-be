@@ -9,19 +9,7 @@ var historySchema = new Schema(
       type: String,
       required: true,
     },
-    history_answer_id: {
-      type: String,
-      required: true,
-    },
-    history_score: {
-      type: Number,
-      required: true,
-    },
-    history_highest_score: {
-      type: Number,
-      default: 0,
-    },
-    history_answer: {
+    history_manga_id: {
       type: String,
       required: true,
     },

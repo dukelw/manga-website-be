@@ -73,6 +73,67 @@ class UserService {
     };
   };
 
+  signUpAnotherWay = async ({
+    name,
+    email,
+    password = "initpass",
+    avatar,
+    isAdmin = false,
+  }) => {
+    // Step 1: Check the existence of email
+    const foundUser = await UserModel.findOne({ user_email: email }).lean();
+    if (foundUser) {
+      return this.signInAnotherWay({ email, avatar, name });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await UserModel.create({
+      user_name: name,
+      user_email: email,
+      user_avatar: avatar,
+      user_password: hashedPassword,
+      isAdmin: isAdmin,
+    });
+
+    if (newUser) {
+      // Create privateKey, publicKey
+      const privateKey = crypto.randomBytes(64).toString("hex");
+      const publicKey = crypto.randomBytes(64).toString("hex");
+
+      const keyStore = await keyTokenService.createKeyToken({
+        user_id: newUser._id,
+        public_key: publicKey,
+        private_key: privateKey,
+      });
+
+      if (!keyStore) {
+        return {
+          code: "400",
+          message: "keyStore error",
+        };
+      }
+
+      // Create pair of token
+      const tokens = await generatePairOfToken(
+        { user_id: newUser._id, email },
+        publicKey,
+        privateKey
+      );
+
+      return {
+        user: getInfoData({
+          fields: ["_id", "user_name", "user_email", "user_avatar", "isAdmin"],
+          object: newUser,
+        }),
+        tokens,
+      };
+    }
+    return {
+      code: 200,
+      metadata: null,
+    };
+  };
+
   signIn = async ({ email, password, refresh_token = null }) => {
     // 1. Check email
     const foundUser = await findByEmail({ email });
@@ -87,6 +148,48 @@ class UserService {
     const publicKey = crypto.randomBytes(64).toString("hex");
 
     // 4. Generate token
+    const { _id: userID } = foundUser;
+    const tokens = await generatePairOfToken(
+      { user_id: userID, email },
+      publicKey,
+      privateKey
+    );
+
+    await keyTokenService.createKeyToken({
+      user_id: userID,
+      public_key: publicKey,
+      private_key: privateKey,
+      refresh_token: tokens.refreshToken,
+    });
+
+    return {
+      user: getInfoData({
+        fields: [
+          "_id",
+          "user_name",
+          "user_email",
+          "user_avatar",
+          "user_birthday",
+          "user_phone",
+          "user_gender",
+          "isAdmin",
+        ],
+        object: foundUser,
+      }),
+      tokens,
+    };
+  };
+
+  signInAnotherWay = async ({ email, avatar, name }) => {
+    // 1. Check email
+    const foundUser = await findByEmail({ email });
+    if (!foundUser) throw new BadRequestError("User has not registered");
+
+    // 2. Create privateKey, publicKey
+    const privateKey = crypto.randomBytes(64).toString("hex");
+    const publicKey = crypto.randomBytes(64).toString("hex");
+
+    // 3. Generate token
     const { _id: userID } = foundUser;
     const tokens = await generatePairOfToken(
       { user_id: userID, email },

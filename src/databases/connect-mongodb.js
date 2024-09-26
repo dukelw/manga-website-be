@@ -5,7 +5,6 @@ const {
 
 const connectString =
   process.env.MONGODB_URL || `mongodb://${host}:${port}/${name}`;
-console.log(`Server will connect to mongodb: ${connectString}`);
 
 class Database {
   constructor() {

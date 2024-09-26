@@ -16,6 +16,20 @@ class UserController {
     }).send(res);
   }
 
+  async signupAnotherWay(req, res, next) {
+    new SuccessResponse({
+      message: "Login successfully",
+      metadata: await userService.signUpAnotherWay(req.body),
+    }).send(res);
+  }
+
+  async signinAnotherWay(req, res, next) {
+    new SuccessResponse({
+      message: "Login successfully",
+      metadata: await userService.signInAnotherWay(req.body),
+    }).send(res);
+  }
+
   async logout(req, res, next) {
     new SuccessResponse({
       message: "Logout successfully",

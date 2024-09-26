@@ -16,7 +16,7 @@ app.use(
 );
 
 // Init db
-// require("./databases/connect-mongodb");
+require("./databases/connect-mongodb");
 
 // Use routes
 route(app);
