@@ -181,6 +181,13 @@ class CommentService {
     return true;
   }
 
+  async getAllCommentOfManga(manga_id) {
+    const foundComments = await CommentModel.find({
+      comment_manga_id: manga_id,
+    });
+    return foundComments;
+  }
+
   async getParentCommentOfManga(manga_id) {
     const parentComments = await CommentModel.find({
       comment_manga_id: manga_id,

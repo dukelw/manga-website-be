@@ -55,7 +55,6 @@ io.on("connection", (socket) => {
       const foundComment = await commentService.getCommentByID({
         comment_id: parent_comment_id,
       });
-      console.log("Found::", foundComment);
       const newNotification = await notificationService.create({
         notification_manga_id: manga_id,
         notification_sender_id: user_id,
@@ -72,7 +71,21 @@ io.on("connection", (socket) => {
         io.in(manga_id).emit("receive_comment", newComment);
       }
     }
+    const foundComments = await commentService.getAllCommentOfManga(manga_id);
+    io.in(manga_id).emit("change_comment", foundComments.length);
     console.log("Room:: ", manga_id);
+  });
+
+  socket.on("get_comment", async (manga_id) => {
+    const foundComments = await commentService.getAllCommentOfManga(manga_id);
+    io.in(manga_id).emit("change_comment", foundComments.length);
+  });
+
+  socket.on("update_notification", async (data) => {
+    const { user_id } = data;
+    io.in(user_id).emit("receive_notification", {
+      message: `notification has changed`,
+    });
   });
 
   socket.on("delete_comment", async (data) => {
